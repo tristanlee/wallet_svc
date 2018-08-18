@@ -10,12 +10,20 @@ console.log(mnemonic);
 var seed_node = bip32.fromSeed(bip39.mnemonicToSeed(mnemonic));
 
 //BIP44 BTC node
-const wallet_hdpath = "m/44'/0'/0'/0"; //bitcoin path
-var btc_node = seed_node.derivePath(wallet_hdpath);
-var btc_xpub = btc_node.neutered().toBase58();
-var btc_xprv = btc_node.toBase58();
-console.log('btc:', btc_xpub);
-console.log('btc:', btc_xprv);
+var wallet_hdpath = "m/44'/0'/0'/0"; //bitcoin path
+var xnode = seed_node.derivePath(wallet_hdpath);
+var xpub = xnode.neutered().toBase58();
+var xprv = xnode.toBase58();
+console.log('BTC:', xpub);
+console.log('BTC:', xprv);
+
+//BIP44 ETH node
+var wallet_hdpath = "m/44'/60'/0'/0"; //ETH path
+var xnode = seed_node.derivePath(wallet_hdpath);
+var xpub = xnode.neutered().toBase58();
+var xprv = xnode.toBase58();
+console.log('ETH:', xpub);
+console.log('ETH:', xprv);
 
 /*
 // import xprv
