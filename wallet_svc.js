@@ -5,14 +5,18 @@ var url = require('url');
 var bitcore = require('bitcore-lib');
 var eth_hdkey = require('ethereumjs-wallet/hdkey');
 var Web3 = require('web3');
-var explorers = require('bitcore-explorers');
-var insight = new explorers.Insight();
+var config = require('./config/config');
+var RpcClient = require('bitcoind-rpc');
+
 const {promisify} = require('util');
 
+var btc_rpc = new RpcClient(config.btc);
 
-var provider = new Web3.providers.HttpProvider("https://mainnet.infura.io/MEDIUMTUTORIAL");
+var provider_uri = 'http://'+config.eth.host+':'+config.eth.port;
+var provider = new Web3.providers.HttpProvider(provider_uri);
+//var provider = new Web3.providers.HttpProvider("https://mainnet.infura.io/MEDIUMTUTORIAL");
 //var provider = new Web3.providers.HttpProvider("https://ropsten.infura.io/MEDIUMTUTORIAL");
-//var provider = new Web3.providers.HttpProvider("http://192.168.1.102:8545");
+
 var web3 = new Web3(provider);
 var utils = web3.utils;
 var eth = web3.eth;
@@ -83,19 +87,46 @@ function btc_balance(res, req) {
     var q = url.parse(req.url, true).query;
 
     if (bitcore.Address.isValid(q.addr)) {
-        insight.getUnspentUtxos(q.addr, function(error, utxo) {
+        btc_rpc.listunspent(1, 99999999, [q.addr], function(error, ret) {
             if (error) {
                 //rpc error
                 SvcErr(res, err.toString());
                 return;
             }
 
+            let utxo = ret.result
             let balance = 0;
             for (var i = 0; i < utxo.length; i++) {
-                balance +=utxo[i]['satoshis'];
+                balance +=utxo[i]['amount'];
             }
-            balance = bitcore.Unit.fromSatoshis(balance).toBTC();
+
             retStr = JSON.stringify({'balance': balance});
+            res.writeHead(200, {'Content-Type': 'text/html'});
+            res.end(retStr);
+        });
+        
+        return 
+    }
+
+    //parameter error
+    SvcErr(res, 'parameter error');
+}
+
+function btc_utxo(res, req) {
+    console.log("Request handler 'btc_utxo' was called.");
+
+    var q = url.parse(req.url, true).query;
+
+    if (bitcore.Address.isValid(q.addr)) {
+        btc_rpc.listunspent(1, 99999999, [q.addr], function(error, ret) {
+            if (error) {
+                //rpc error
+                SvcErr(res, err.toString());
+                return;
+            }
+
+            let utxo = ret.result
+            retStr = JSON.stringify({'utxo': utxo});
             res.writeHead(200, {'Content-Type': 'text/html'});
             res.end(retStr);
         });
@@ -160,8 +191,11 @@ function cpcs_balance(res, req) {
 }
 
 exports.btc_addr = btc_addr;
-exports.eth_addr = eth_addr;
 exports.btc_balance = btc_balance;
+exports.btc_utxo = btc_utxo;
+
+exports.eth_addr = eth_addr;
 exports.eth_balance = eth_balance;
+
 exports.cpcs_balance = cpcs_balance;
 
