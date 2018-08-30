@@ -21,12 +21,11 @@ var web3 = new Web3(provider);
 var utils = web3.utils;
 var eth = web3.eth;
 
-
-const btc_xpub = 'xpub6EetK7UxfgjeepqWEkSK55JpQG4nesR77wbECVHfmHrMc19Zw3FDWAr1XpJ7xHxLQBwrgsik2qY98hXRSbR2DsSyCCRtreJduHzfmpSj1yH' 
+const btc_xpub = config.btc_xpub;
 // import xpub
 var btc_xnode = bip32.fromBase58(btc_xpub);
 
-const eth_xpub = 'xpub6ERGFRzg9ptkXfZUmL9y7zRkvL58MBQyce61msQ9yBGFebD5Ha1LWsnfWK2XFyH9jqzsKBhYt6TYTAZq5eCJQRoZXUmyPBudicPAAFtb9iG' 
+const eth_xpub = config.eth_xpub;
 // import xpub
 var eth_xnode = eth_hdkey.fromExtendedKey(eth_xpub);
 
@@ -40,6 +39,15 @@ function SvcErr (res, errStr) {
 function BtcSvcAddr (uid) {
     var wal = btc_xnode.derive(uid) // uid is a number
     var addr = bitcore.PublicKey(wal.publicKey).toAddress().toString();
+
+    //import addr into monitor
+    btc_rpc.importaddress(addr, 'exchange', false, function(error, ret) {
+        if (error) {
+            //rpc error
+            return;
+        }
+    });
+
     return JSON.stringify({'addr': addr});
 }
 
@@ -197,5 +205,6 @@ exports.btc_utxo = btc_utxo;
 exports.eth_addr = eth_addr;
 exports.eth_balance = eth_balance;
 
+exports.cpcs_addr = eth_addr;
 exports.cpcs_balance = cpcs_balance;
 
